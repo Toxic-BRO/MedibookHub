@@ -1,0 +1,20 @@
+<?php
+/**
+ * auth/logout.php — POST + CSRF only, so a stray <img src> cannot log you out.
+ */
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/../config/config.php';
+
+if (!is_post()) {
+    redirect('index.php');
+}
+
+verify_csrf();
+
+destroy_session();
+session_start();            // fresh session just to carry the flash message
+
+flash('success', 'You have been signed out.');
+redirect('index.php');
