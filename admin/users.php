@@ -35,7 +35,7 @@ if (is_post()) {
         notify($id, 'Your account has been blocked by an administrator.', null, false);
         flash('success', $target['name'] . ' is blocked and can no longer sign in.');
     } elseif ($action === 'unblock') {
-        // Doctors return to 'pending' until an admin verifies them again.
+        
         $newStatus = $target['role'] === 'doctor' ? 'pending' : 'active';
         db()->prepare('UPDATE users SET status = ? WHERE id = ?')->execute([$newStatus, $id]);
         if ($target['role'] === 'doctor') {
@@ -43,8 +43,8 @@ if (is_post()) {
         }
         flash('success', $target['name'] . ' was unblocked' . ($target['role'] === 'doctor' ? ' and is pending re-verification.' : '.'));
     } elseif ($action === 'delete') {
-        // ON DELETE CASCADE removes their doctor/patient row, appointments,
-        // reviews and notifications.
+        
+        
         db()->prepare('DELETE FROM users WHERE id = ?')->execute([$id]);
         flash('success', $target['name'] . ' and all related records were deleted.');
     }

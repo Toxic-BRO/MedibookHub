@@ -1,19 +1,9 @@
 <?php
-/**
- * install.php — setup health check.
- *
- * Verifies the whole chain: PHP build, PDO MySQL, credentials, schema,
- * seed data, URL detection and folder permissions. If the tables are
- * missing it can import database.sql for you.
- *
- * Local development aid only — delete this file before going live.
- */
 
 declare(strict_types=1);
 
 require_once __DIR__ . '/config/config.php';
 
-/* Only run from the machine that hosts the app. */
 $isLocal = in_array($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1', ['127.0.0.1', '::1'], true);
 if (!$isLocal) {
     http_response_code(403);
@@ -31,9 +21,6 @@ function add_check(array &$checks, string $label, string $state, string $detail 
     $checks[] = ['label' => $label, 'state' => $state, 'detail' => $detail];
 }
 
-/* ------------------------------------------------------------------ */
-/*  Import database.sql on demand                                      */
-/* ------------------------------------------------------------------ */
 if (is_post() && post('action') === 'import') {
     verify_csrf();
 
@@ -42,7 +29,7 @@ if (is_post() && post('action') === 'import') {
         $imported = ['ok' => false, 'msg' => 'database.sql was not found next to install.php.'];
     } else {
         try {
-            // Connect without a database name so DROP/CREATE DATABASE can run.
+            
             $root = new PDO(
                 'mysql:host=' . DB_HOST . ';charset=' . DB_CHARSET,
                 DB_USER,
@@ -52,7 +39,7 @@ if (is_post() && post('action') === 'import') {
 
             $sql = (string) file_get_contents($sqlFile);
 
-            // Split on semicolons that are not inside quotes.
+            
             $statements = [];
             $buffer = '';
             $quote  = null;
@@ -63,7 +50,7 @@ if (is_post() && post('action') === 'import') {
 
                 if ($quote !== null) {
                     $buffer .= $ch;
-                    if ($ch === '\\' && $i + 1 < $len) {      // escaped char
+                    if ($ch === '\\' && $i + 1 < $len) {      
                         $buffer .= $sql[++$i];
                     } elseif ($ch === $quote) {
                         $quote = null;
@@ -90,7 +77,7 @@ if (is_post() && post('action') === 'import') {
 
             $ran = 0;
             foreach ($statements as $stmt) {
-                // Drop pure comment lines, keep the rest.
+                
                 $clean = preg_replace('/^\s*--.*$/m', '', $stmt);
                 $clean = trim((string) $clean);
                 if ($clean === '') {
@@ -107,9 +94,6 @@ if (is_post() && post('action') === 'import') {
     }
 }
 
-/* ------------------------------------------------------------------ */
-/*  Checks                                                             */
-/* ------------------------------------------------------------------ */
 add_check(
     $checks,
     'PHP version',
@@ -138,7 +122,6 @@ add_check(
     session_status() === PHP_SESSION_ACTIVE ? 'active (' . session_name() . ')' : 'session_start() failed'
 );
 
-/* ---- database ---- */
 try {
     $db = new PDO(
         'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=' . DB_CHARSET,
@@ -153,7 +136,6 @@ try {
     add_check($checks, 'Database connection', 'fail', $dbError);
 }
 
-/* ---- schema ---- */
 $required = ['users', 'doctors', 'patients', 'availability', 'appointments', 'reviews', 'complaints', 'notifications'];
 
 if ($db) {
@@ -200,7 +182,6 @@ if ($db) {
     }
 }
 
-/* ---- runtime ---- */
 add_check(
     $checks,
     'Base URL',

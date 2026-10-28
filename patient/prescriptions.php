@@ -52,7 +52,6 @@ require __DIR__ . '/../includes/header.php';
                             </div>
                         </div>
                         <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis border border-primary-subtle">
-                            #<?= (int) $r['id'] ?>
                         </span>
                     </div>
                     <div class="card-body d-flex flex-column gap-3">

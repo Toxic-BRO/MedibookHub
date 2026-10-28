@@ -1,12 +1,3 @@
--- =====================================================================
---  MediBook — Doctor Appointment System
---  Schema + sample data
---
---  Import via phpMyAdmin (Import tab) or:
---    mysql -u root -p < database.sql
---
---  Tested on MariaDB 10.4 / MySQL 8.0 (XAMPP).
--- =====================================================================
 
 DROP DATABASE IF EXISTS doctor_appointment;
 CREATE DATABASE doctor_appointment
@@ -17,16 +8,12 @@ USE doctor_appointment;
 SET NAMES utf8mb4;
 SET time_zone = '+00:00';
 
--- ---------------------------------------------------------------------
--- users : one row per human, role decides which dashboard they get
--- ---------------------------------------------------------------------
 CREATE TABLE users (
     id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
     name          VARCHAR(100) NOT NULL,
     email         VARCHAR(190) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role          ENUM('patient','doctor','admin') NOT NULL DEFAULT 'patient',
-    -- doctors start as 'pending' until an admin verifies them
     status        ENUM('active','pending','blocked') NOT NULL DEFAULT 'active',
     created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
@@ -34,9 +21,6 @@ CREATE TABLE users (
     KEY idx_users_role_status (role, status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ---------------------------------------------------------------------
--- doctors : profile extension of users (1:1)
--- ---------------------------------------------------------------------
 CREATE TABLE doctors (
     user_id     INT UNSIGNED NOT NULL,
     specialty   VARCHAR(100) NOT NULL,
@@ -53,9 +37,6 @@ CREATE TABLE doctors (
         REFERENCES users (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ---------------------------------------------------------------------
--- patients : profile extension of users (1:1)
--- ---------------------------------------------------------------------
 CREATE TABLE patients (
     user_id INT UNSIGNED NOT NULL,
     age     TINYINT UNSIGNED NULL,
@@ -67,10 +48,6 @@ CREATE TABLE patients (
         REFERENCES users (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ---------------------------------------------------------------------
--- availability : weekly recurring template, slots are generated from it
--- day_of_week: 0=Sunday ... 6=Saturday  (matches PHP date('w'))
--- ---------------------------------------------------------------------
 CREATE TABLE availability (
     id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
     doctor_id    INT UNSIGNED NOT NULL,
@@ -88,19 +65,6 @@ CREATE TABLE availability (
     CONSTRAINT chk_availability_slot CHECK (slot_minutes BETWEEN 5 AND 240)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ---------------------------------------------------------------------
--- appointments
---
--- Double-booking guard:
---   slot_lock is a generated column that is 1 while the appointment is
---   "live" (pending/confirmed/completed) and NULL once it is
---   cancelled/rejected. MySQL treats NULLs as distinct inside a UNIQUE
---   index, so:
---     * two live appointments can never share doctor+date+time
---     * a cancelled/rejected row no longer blocks the slot
---   This keeps the required UNIQUE(doctor_id, date, time) guarantee
---   without permanently burning slots that were released.
--- ---------------------------------------------------------------------
 CREATE TABLE appointments (
     id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
     patient_id   INT UNSIGNED NOT NULL,
@@ -129,9 +93,6 @@ CREATE TABLE appointments (
         REFERENCES doctors (user_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ---------------------------------------------------------------------
--- reviews : one review per completed appointment
--- ---------------------------------------------------------------------
 CREATE TABLE reviews (
     id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
     appointment_id INT UNSIGNED NOT NULL,
@@ -145,9 +106,6 @@ CREATE TABLE reviews (
     CONSTRAINT chk_reviews_rating CHECK (rating BETWEEN 1 AND 5)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ---------------------------------------------------------------------
--- complaints : patient -> (optional) doctor, handled by admin
--- ---------------------------------------------------------------------
 CREATE TABLE complaints (
     id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
     patient_id INT UNSIGNED NOT NULL,
@@ -164,9 +122,6 @@ CREATE TABLE complaints (
         REFERENCES doctors (user_id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ---------------------------------------------------------------------
--- notifications : in-app notification bell
--- ---------------------------------------------------------------------
 CREATE TABLE notifications (
     id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
     user_id    INT UNSIGNED NOT NULL,
@@ -180,19 +135,11 @@ CREATE TABLE notifications (
         REFERENCES users (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- =====================================================================
---  SAMPLE DATA
---  All passwords below are bcrypt hashes of the plain text in brackets.
--- =====================================================================
-
--- Admin .............................. [Admin@123]
 INSERT INTO users (id, name, email, password_hash, role, status) VALUES
 (1, 'System Admin', 'admin@medibook.test',
  '$2y$10$2qZE525Y8XEYLJzsd7swmOHvY54Gr74DWA6.ZhL2MNNP57QnDF6wG',
  'admin', 'active');
 
--- Patients ........................... [Patient@123]
 INSERT INTO users (id, name, email, password_hash, role, status) VALUES
 (2, 'John Carter', 'patient@medibook.test',
  '$2y$10$uEXGcjNmmf6GPDv78Swd/OfqpDnN7IfoP0E59LA5kUR/T6LxNqWUm',
@@ -205,8 +152,6 @@ INSERT INTO patients (user_id, age, gender, phone, address) VALUES
 (2, 34, 'male',   '+1 212 555 0147', '221B Baker Street, New York'),
 (3, 28, 'female', '+1 212 555 0192', '88 Atlantic Ave, Brooklyn');
 
--- Doctors ............................ [Doctor@123]
--- 4 is verified, 5 is verified, 6 is verified, 7 is still pending
 INSERT INTO users (id, name, email, password_hash, role, status) VALUES
 (4, 'Dr. Sarah Mitchell', 'sarah@medibook.test',
  '$2y$10$9L6mGirIoUN2ZXY17WYnVuDIe5UyURYKEe.wKxwpKwebqGIhZP7MK',
@@ -235,8 +180,6 @@ INSERT INTO doctors (user_id, specialty, fee, experience, bio, location, photo, 
  'General practitioner covering everyday illness, chronic-condition management and annual check-ups.',
  'Jersey City, NJ', NULL, 0);
 
--- Weekly availability
--- Dr. Mitchell: Mon-Fri 09:00-13:00, 30 min slots
 INSERT INTO availability (doctor_id, day_of_week, start_time, end_time, slot_minutes) VALUES
 (4, 1, '09:00:00', '13:00:00', 30),
 (4, 2, '09:00:00', '13:00:00', 30),
@@ -244,41 +187,33 @@ INSERT INTO availability (doctor_id, day_of_week, start_time, end_time, slot_min
 (4, 4, '09:00:00', '13:00:00', 30),
 (4, 5, '09:00:00', '13:00:00', 30);
 
--- Dr. Chen: Mon / Wed / Fri 14:00-18:00, 30 min slots
 INSERT INTO availability (doctor_id, day_of_week, start_time, end_time, slot_minutes) VALUES
 (5, 1, '14:00:00', '18:00:00', 30),
 (5, 3, '14:00:00', '18:00:00', 30),
 (5, 5, '14:00:00', '18:00:00', 30);
 
--- Dr. Rahman: Tue / Thu / Sat 10:00-14:00, 20 min slots
 INSERT INTO availability (doctor_id, day_of_week, start_time, end_time, slot_minutes) VALUES
 (6, 2, '10:00:00', '14:00:00', 20),
 (6, 4, '10:00:00', '14:00:00', 20),
 (6, 6, '10:00:00', '14:00:00', 20);
 
--- Appointments (dates are relative so the demo always has live data)
--- 1) completed in the past, with notes + prescription
 INSERT INTO appointments (id, patient_id, doctor_id, `date`, `time`, status, reason, notes, prescription, created_at) VALUES
 (1, 2, 4, CURDATE() - INTERVAL 14 DAY, '10:00:00', 'completed',
  'Chest tightness after exercise',
  'ECG normal. Mild hypertension, likely stress related. Advised 30 min cardio 4x/week, reduce caffeine, recheck BP in 3 months.',
  'Lisinopril 5mg once daily (30 days)\nAspirin 75mg once daily (30 days)',
  NOW() - INTERVAL 14 DAY),
--- 2) completed in the past
 (2, 3, 5, CURDATE() - INTERVAL 7 DAY, '15:00:00', 'completed',
  'Persistent rash on both forearms',
  'Contact dermatitis, probably from a new detergent. No infection. Patch test recommended if it recurs.',
  'Hydrocortisone 1% cream twice daily for 10 days\nCetirizine 10mg at night as needed',
  NOW() - INTERVAL 7 DAY),
--- 3) confirmed, upcoming
 (3, 2, 6, CURDATE() + INTERVAL 2 DAY, '10:20:00', 'confirmed',
  'Annual check-up for my 6 year old',
  NULL, NULL, NOW() - INTERVAL 1 DAY),
--- 4) pending, waiting on the doctor
 (4, 3, 4, CURDATE() + INTERVAL 1 DAY, '09:30:00', 'pending',
  'Follow-up on blood pressure readings',
  NULL, NULL, NOW() - INTERVAL 3 HOUR),
--- 5) cancelled -> its slot is free again
 (5, 3, 4, CURDATE() + INTERVAL 3 DAY, '11:00:00', 'cancelled',
  'Migraine consultation',
  NULL, NULL, NOW() - INTERVAL 2 DAY);

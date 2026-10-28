@@ -1,10 +1,4 @@
 <?php
-/**
- * config/database.php — PDO connection factory.
- *
- * Uses prepared statements with emulation turned off, so every value the
- * app binds is sent to MySQL separately from the SQL text.
- */
 
 declare(strict_types=1);
 
@@ -46,8 +40,8 @@ function db(): PDO
         );
     }
 
-    // Keep MySQL's clock in sync with PHP's configured timezone so NOW()
-    // and CURDATE() agree with date('Y-m-d') in the app.
+    
+    
     $offset = (new DateTimeImmutable('now', new DateTimeZone(APP_TIMEZONE)))->format('P');
     $pdo->exec("SET time_zone = '{$offset}'");
 

@@ -6,7 +6,6 @@ require_once __DIR__ . '/../config/config.php';
 $user = require_login('patient');
 $pid  = (int) $user['id'];
 
-
 if (is_post() && post('action') === 'cancel') {
     verify_csrf();
 

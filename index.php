@@ -1,7 +1,4 @@
 <?php
-/**
- * index.php — public landing page + doctor search.
- */
 
 declare(strict_types=1);
 
@@ -23,7 +20,6 @@ $doctors    = search_doctors($q, $specialty, $location, $isSearching ? 60 : 6);
 $specialties = get_specialties();
 $locations   = get_locations();
 
-/* Headline numbers, straight from the database. */
 $statDoctors = (int) db()->query(
     "SELECT COUNT(*) FROM doctors d JOIN users u ON u.id = d.user_id
       WHERE d.is_verified = 1 AND u.status = 'active'"

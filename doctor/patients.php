@@ -22,7 +22,6 @@ $stmt = db()->prepare(
 $stmt->execute([$did]);
 $patients = $stmt->fetchAll();
 
-
 $history = [];
 if ($patients) {
     $ids = array_map(static fn ($p) => (int) $p['id'], $patients);

@@ -1,11 +1,4 @@
 <?php
-/**
- * auth/register.php — patient or doctor sign-up.
- *
- * Doctor accounts are created with status 'pending' and is_verified = 0:
- * they can sign in, but they are invisible to patients and cannot take
- * bookings until an admin verifies them.
- */
 
 declare(strict_types=1);
 
@@ -46,7 +39,7 @@ if (is_post()) {
     $password = isset($_POST['password']) && is_string($_POST['password']) ? $_POST['password'] : '';
     $confirm  = isset($_POST['password_confirm']) && is_string($_POST['password_confirm']) ? $_POST['password_confirm'] : '';
 
-    /* ---- shared validation ---- */
+    
     if (mb_strlen($name) < 2 || mb_strlen($name) > 100) {
         $errors['name'] = 'Enter your full name (2–100 characters).';
     }
@@ -68,7 +61,7 @@ if (is_post()) {
         $errors['password_confirm'] = 'The two passwords do not match.';
     }
 
-    /* ---- role-specific validation ---- */
+    
     $age = null;
     if ($role === 'patient') {
         if ($form['age'] !== '') {
@@ -149,7 +142,7 @@ if (is_post()) {
 
             $pdo->commit();
 
-            // Tell every admin there is something to review.
+            
             if ($role === 'doctor') {
                 $admins = $pdo->query("SELECT id FROM users WHERE role = 'admin'")->fetchAll(PDO::FETCH_COLUMN);
                 foreach ($admins as $adminId) {
@@ -252,7 +245,7 @@ require __DIR__ . '/../includes/header.php';
 
                     <hr class="my-4">
 
-                    <!-- patient-only fields -->
+                    
                     <div class="role-fields" data-role-fields="patient" <?= $role === 'doctor' ? 'hidden' : '' ?>>
                         <div class="row g-3">
                             <div class="col-md-4">
@@ -285,7 +278,7 @@ require __DIR__ . '/../includes/header.php';
                         </div>
                     </div>
 
-                    <!-- doctor-only fields -->
+                    
                     <div class="role-fields" data-role-fields="doctor" <?= $role === 'patient' ? 'hidden' : '' ?>>
                         <div class="alert alert-warning py-2 d-flex gap-2 align-items-start" style="font-size:.82rem">
                             <?= icon('shield', 16) ?>

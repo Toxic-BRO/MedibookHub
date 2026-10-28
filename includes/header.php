@@ -25,7 +25,6 @@ if ($user) {
     $__notifs = $__stmt->fetchAll();
 }
 
-
 $__navMap = [
     'patient' => [
         ['dashboard.php',         'Dashboard',           'grid',     ''],

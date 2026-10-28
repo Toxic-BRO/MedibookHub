@@ -53,7 +53,7 @@ if (is_post()) {
             $errors['location'] = 'Where do you practise?';
         }
 
-        /* ---- photo ---- */
+        
         $newPhoto = null;
         $file = $_FILES['photo'] ?? null;
         if (is_array($file) && ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {

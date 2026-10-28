@@ -1,6 +1,5 @@
 <?php
 
-
 declare(strict_types=1);
 
 require_once __DIR__ . '/../config/config.php';
@@ -10,7 +9,6 @@ $did  = (int) $user['id'];
 
 $doc = doctor_detail($did);
 $verified = $doc && (int) $doc['is_verified'] === 1;
-
 
 $today = db()->prepare(
     "SELECT a.*, u.name AS patient_name, p.phone, p.age, p.gender
@@ -23,7 +21,6 @@ $today = db()->prepare(
 $today->execute([$did]);
 $todayList = $today->fetchAll();
 
-
 $pending = db()->prepare(
     "SELECT a.*, u.name AS patient_name, p.age, p.gender, p.phone
        FROM appointments a
@@ -34,7 +31,6 @@ $pending = db()->prepare(
 );
 $pending->execute([$did]);
 $pendingList = $pending->fetchAll();
-
 
 $stats = db()->prepare(
     "SELECT

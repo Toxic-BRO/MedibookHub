@@ -20,19 +20,16 @@ $rescheduleId = post_int('reschedule_id');
 
 $backTo = url('patient/doctor.php?id=' . $doctorId . '&date=' . urlencode($date));
 
-
 $fail = static function (string $msg) use ($backTo): never {
     flash('danger', $msg);
     redirect($backTo);
 };
-
 
 $doctor = doctor_detail($doctorId);
 if (!$doctor || !(int) $doctor['is_verified'] || $doctor['status'] !== 'active') {
     flash('danger', 'That doctor is not accepting appointments.');
     redirect('patient/doctors.php');
 }
-
 
 $old = null;
 if ($rescheduleId > 0) {
@@ -51,7 +48,6 @@ if ($rescheduleId > 0) {
         $fail('That is the same slot you already have. Pick a different time.');
     }
 }
-
 
 if (!slot_is_bookable($doctorId, $date, $time)) {
     $fail('Sorry — that slot was just taken or is no longer available. Please pick another.');
@@ -88,7 +84,6 @@ try {
     }
     $fail('We could not save that booking. Please try again.');
 }
-
 
 notify(
     $doctorId,

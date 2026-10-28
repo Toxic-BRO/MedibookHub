@@ -6,7 +6,6 @@ require_once __DIR__ . '/../config/config.php';
 $user = require_login('patient');
 $pid  = (int) $user['id'];
 
-
 $next = db()->prepare(
     "SELECT a.*, u.name AS doctor_name, d.specialty, d.location, d.fee, d.photo
        FROM appointments a
@@ -20,7 +19,6 @@ $next = db()->prepare(
 );
 $next->execute([$pid]);
 $nextAppt = $next->fetch() ?: null;
-
 
 $counts = db()->prepare(
     "SELECT
@@ -39,7 +37,6 @@ $rxCount = db()->prepare(
 $rxCount->execute([$pid]);
 $prescriptions = (int) $rxCount->fetchColumn();
 
-
 $toReview = db()->prepare(
     "SELECT a.id, a.`date`, u.name AS doctor_name, d.specialty
        FROM appointments a
@@ -51,7 +48,6 @@ $toReview = db()->prepare(
 );
 $toReview->execute([$pid]);
 $pendingReviews = $toReview->fetchAll();
-
 
 $recent = db()->prepare(
     "SELECT a.*, u.name AS doctor_name, d.specialty, r.rating
@@ -111,7 +107,7 @@ require __DIR__ . '/../includes/header.php';
 <div class="row g-4">
     <div class="col-lg-7">
 
-        <!-- AI Health Assistant banner -->
+        
         <div class="card mb-4 ai-banner-card">
             <div class="card-body p-4">
                 <div class="d-flex align-items-center gap-3 flex-wrap">

@@ -1,8 +1,6 @@
 <?php
 
-
 declare(strict_types=1);
-
 
 function e(mixed $value): string
 {
@@ -444,12 +442,10 @@ function translate_html(string $html): string
     ) ?? $html;
 }
 
-
 function url(string $path = ''): string
 {
     return BASE_URL . '/' . ltrim($path, '/');
 }
-
 
 function absolute_url(string $path = ''): string
 {
@@ -457,7 +453,6 @@ function absolute_url(string $path = ''): string
     $host   = $_SERVER['HTTP_HOST'] ?? 'localhost';
     return $scheme . '://' . $host . url($path);
 }
-
 
 function redirect(string $path): never
 {
@@ -473,7 +468,6 @@ function redirect(string $path): never
     exit;
 }
 
-
 function dashboard_url(string $role): string
 {
     return match ($role) {
@@ -484,13 +478,11 @@ function dashboard_url(string $role): string
     };
 }
 
-
 function post(string $key, string $default = ''): string
 {
     $v = $_POST[$key] ?? $default;
     return is_string($v) ? trim($v) : $default;
 }
-
 
 function query(string $key, string $default = ''): string
 {
@@ -521,21 +513,17 @@ function is_post(): bool
     return ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
 }
 
-
 function flash(string $type, string $message): void
 {
     $_SESSION['flash'][] = ['type' => $type, 'msg' => $message];
 }
 
-/** @return array<int, array{type:string,msg:string}> */
 function take_flashes(): array
 {
     $f = $_SESSION['flash'] ?? [];
     unset($_SESSION['flash']);
     return $f;
 }
-
-
 
 function csrf_token(): string
 {
@@ -545,12 +533,10 @@ function csrf_token(): string
     return $_SESSION['csrf_token'];
 }
 
-
 function csrf_field(): string
 {
     return '<input type="hidden" name="csrf_token" value="' . e(csrf_token()) . '">';
 }
-
 
 function verify_csrf(): void
 {
@@ -566,7 +552,6 @@ function verify_csrf(): void
         );
     }
 }
-
 
 function auth_user(): ?array
 {
@@ -610,7 +595,6 @@ function destroy_session(): void
     session_destroy();
 }
 
-
 function require_login(string|array|null $role = null): array
 {
     $user = auth_user();
@@ -637,7 +621,6 @@ function require_login(string|array|null $role = null): array
     return $user;
 }
 
-
 function abort_403(string $message = 'You do not have permission to view this page.'): never
 {
     http_response_code(403);
@@ -656,7 +639,6 @@ function abort_403(string $message = 'You do not have permission to view this pa
     exit;
 }
 
-
 function notify(int $userId, string $message, ?string $link = null, bool $email = true): void
 {
     $stmt = db()->prepare('INSERT INTO notifications (user_id, message, link) VALUES (?, ?, ?)');
@@ -671,7 +653,6 @@ function notify(int $userId, string $message, ?string $link = null, bool $email 
         }
     }
 }
-
 
 function send_app_email(string $to, string $subject, string $body): bool
 {
@@ -702,14 +683,11 @@ function unread_notifications(int $userId): int
     return (int) $stmt->fetchColumn();
 }
 
-
-
 function money(float|string|null $amount): string
 {
     $symbol = defined('CURRENCY_SYMBOL') ? CURRENCY_SYMBOL : '৳';
     return $symbol . number_format((float) $amount, 2);
 }
-
 
 function fmt_date(?string $date): string
 {
@@ -717,7 +695,6 @@ function fmt_date(?string $date): string
     $ts = strtotime($date);
     return $ts ? date('D, d M Y', $ts) : '—';
 }
-
 
 function fmt_time(?string $time): string
 {
@@ -743,7 +720,6 @@ function day_short(int $dow): string
     return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][$dow] ?? '—';
 }
 
-
 function status_badge(string $status): string
 {
     [$cls, $label] = match ($status) {
@@ -757,7 +733,6 @@ function status_badge(string $status): string
     return '<span class="badge rounded-pill bg-' . $cls . '">' . e($label) . '</span>';
 }
 
-
 function time_ago(?string $dt): string
 {
     if (!$dt) return '';
@@ -768,7 +743,6 @@ function time_ago(?string $dt): string
     if ($diff < 604800)  return floor($diff / 86400) . ' d ago';
     return date('d M Y', strtotime($dt));
 }
-
 
 function generate_slots(string $start, string $end, int $minutes): array
 {
@@ -788,7 +762,6 @@ function generate_slots(string $start, string $end, int $minutes): array
     return $slots;
 }
 
-
 function availability_for_day(int $doctorId, int $dow): array
 {
     $stmt = db()->prepare(
@@ -800,7 +773,6 @@ function availability_for_day(int $doctorId, int $dow): array
     $stmt->execute([$doctorId, $dow]);
     return $stmt->fetchAll();
 }
-
 
 function booked_slots(int $doctorId, string $date): array
 {
@@ -820,11 +792,6 @@ function booked_slots(int $doctorId, string $date): array
     return $out;
 }
 
-/**
-
- *
- * @return array<string, array{available:bool, booked:bool, past:bool, status:?string}>
- */
 function doctor_day_slots(int $doctorId, string $date): array
 {
     $dow = (int) date('w', strtotime($date));
@@ -856,7 +823,6 @@ function doctor_day_slots(int $doctorId, string $date): array
     return $result;
 }
 
-
 function doctor_open_days(int $doctorId, int $limit = 14): array
 {
     $stmt = db()->prepare('SELECT DISTINCT day_of_week FROM availability WHERE doctor_id = ?');
@@ -879,7 +845,6 @@ function doctor_open_days(int $doctorId, int $limit = 14): array
     }
     return $out;
 }
-
 
 function slot_is_bookable(int $doctorId, string $date, string $time): bool
 {
@@ -905,9 +870,6 @@ function slot_is_bookable(int $doctorId, string $date, string $time): bool
     $slots = doctor_day_slots($doctorId, $date);
     return isset($slots[$time]) && $slots[$time]['available'];
 }
-
-
-
 
 function search_doctors(string $q = '', string $specialty = '', string $location = '', int $limit = 60): array
 {
@@ -949,7 +911,6 @@ function search_doctors(string $q = '', string $specialty = '', string $location
     return $stmt->fetchAll();
 }
 
-
 function get_specialties(): array
 {
     $sql = "SELECT d.specialty, COUNT(*) AS total
@@ -961,7 +922,6 @@ function get_specialties(): array
     return db()->query($sql)->fetchAll();
 }
 
-
 function get_locations(): array
 {
     $sql = "SELECT DISTINCT d.location
@@ -972,7 +932,6 @@ function get_locations(): array
     return db()->query($sql)->fetchAll(PDO::FETCH_COLUMN);
 }
 
-
 function common_specialties(): array
 {
     return [
@@ -981,7 +940,6 @@ function common_specialties(): array
         'Dentistry', 'Endocrinology', 'Gastroenterology', 'Pulmonology', 'Urology',
     ];
 }
-
 
 function doctor_detail(int $doctorId): ?array
 {
@@ -994,7 +952,6 @@ function doctor_detail(int $doctorId): ?array
     $stmt->execute([$doctorId]);
     return $stmt->fetch() ?: null;
 }
-
 
 function weekly_availability(int $doctorId): array
 {
@@ -1012,7 +969,6 @@ function weekly_availability(int $doctorId): array
     return $out;
 }
 
-
 function initials(string $name): string
 {
     $parts = preg_split('/\s+/', trim($name)) ?: [];
@@ -1023,7 +979,6 @@ function initials(string $name): string
     }
     return $out !== '' ? $out : mb_strtoupper(mb_substr($name, 0, 1));
 }
-
 
 function doctor_avatar(array $doctor, string $sizeClass = ''): string
 {
@@ -1037,8 +992,6 @@ function doctor_avatar(array $doctor, string $sizeClass = ''): string
     }
     return '<div class="' . e($cls) . '">' . e(initials($name)) . '</div>';
 }
-
-
 
 function icon(string $name, int $size = 20, string $class = ''): string
 {
@@ -1086,7 +1039,6 @@ function icon(string $name, int $size = 20, string $class = ''): string
         . 'fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" '
         . 'stroke-linejoin="round" aria-hidden="true" focusable="false">' . $body . '</svg>';
 }
-
 
 function doctor_rating(int $doctorId): array
 {

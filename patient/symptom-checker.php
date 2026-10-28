@@ -1,16 +1,4 @@
 <?php
-/**
- * patient/symptom-checker.php — AI Health Assistant page.
- *
- * Patients type their symptoms in natural language. The AI engine:
- *   1. Matches symptoms to the best medical specialty
- *   2. Recommends the best-matching verified doctors from the database
- *   3. Provides do's and don'ts health advice for the condition
- *   4. Shows urgency level (normal / soon / urgent)
- *
- * Doctor lateness reminder: a button lets patients trigger a check
- * for doctors who haven't responded to pending appointments.
- */
 
 declare(strict_types=1);
 
@@ -19,7 +7,6 @@ require_once __DIR__ . '/../config/config.php';
 $user = require_login('patient');
 $pid  = (int) $user['id'];
 
-// Handle AJAX symptom analysis.
 if (is_post() && post('action') === 'analyze') {
     verify_csrf();
 
@@ -36,7 +23,7 @@ if (is_post() && post('action') === 'analyze') {
 
     $result = ai_analyze_symptoms($symptomText);
 
-    // Build doctor cards HTML.
+    
     ob_start();
     if (!empty($result['doctors'])):
         foreach ($result['doctors'] as $doc): ?>
@@ -87,7 +74,7 @@ if (is_post() && post('action') === 'analyze') {
 
     $doctorHtml = ob_get_clean();
 
-    // Build do's HTML.
+    
     ob_start();
     foreach ($result['dos'] as $do): ?>
         <li class="ai-do-item">
@@ -97,7 +84,7 @@ if (is_post() && post('action') === 'analyze') {
     <?php endforeach;
     $dosHtml = ob_get_clean();
 
-    // Build don'ts HTML.
+    
     ob_start();
     foreach ($result['donts'] as $dont): ?>
         <li class="ai-do-item">
@@ -122,7 +109,6 @@ if (is_post() && post('action') === 'analyze') {
     exit;
 }
 
-// Handle lateness reminder check.
 if (is_post() && post('action') === 'check_lateness') {
     verify_csrf();
     header('Content-Type: application/json');
@@ -137,7 +123,6 @@ if (is_post() && post('action') === 'check_lateness') {
     exit;
 }
 
-// Check if the patient has any pending appointments.
 $hasPending = db()->prepare(
     "SELECT COUNT(*) FROM appointments
       WHERE patient_id = ? AND status = 'pending'"
@@ -153,11 +138,10 @@ $activeNav  = 'symptom-checker';
 require __DIR__ . '/../includes/header.php';
 ?>
 
-<!-- AI Symptom Checker -->
 <div class="row g-4">
     <div class="col-lg-8">
 
-        <!-- Input card -->
+        
         <div class="card mb-4 ai-input-card">
             <div class="card-header d-flex align-items-center gap-2">
                 <span class="ai-icon-badge"><?= icon('stetho', 20) ?></span>
@@ -197,7 +181,7 @@ require __DIR__ . '/../includes/header.php';
                     </div>
                 </form>
 
-                <!-- Quick-pick suggestion chips -->
+                
                 <div class="mt-3">
                     <div class="text-faint mb-2" style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em">
                         Or try an example:
@@ -216,10 +200,10 @@ require __DIR__ . '/../includes/header.php';
             </div>
         </div>
 
-        <!-- Results placeholder -->
+        
         <div id="aiResults" style="display:none">
 
-            <!-- Urgency + description card -->
+            
             <div class="card mb-4" id="aiSummaryCard">
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <span class="d-flex align-items-center gap-2">
@@ -234,7 +218,7 @@ require __DIR__ . '/../includes/header.php';
                 </div>
             </div>
 
-            <!-- Do's and Don'ts -->
+            
             <div class="row g-3 mb-4">
                 <div class="col-md-6">
                     <div class="card h-100 ai-dos-card">
@@ -260,7 +244,7 @@ require __DIR__ . '/../includes/header.php';
                 </div>
             </div>
 
-            <!-- Self care advice -->
+            
             <div class="card mb-4 ai-selfcare-card" id="aiSelfCareCard" style="display:none">
                 <div class="card-header d-flex align-items-center gap-2">
                     <span class="ai-icon-badge"><?= icon('shield', 16) ?></span>
@@ -271,7 +255,7 @@ require __DIR__ . '/../includes/header.php';
                 </div>
             </div>
 
-            <!-- Recommended doctors -->
+            
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span class="d-flex align-items-center gap-2">
@@ -285,7 +269,7 @@ require __DIR__ . '/../includes/header.php';
                 </div>
             </div>
 
-            <!-- Emergency warning -->
+            
             <div class="alert alert-danger d-flex gap-2 align-items-start" id="aiEmergencyAlert" style="display:none">
                 <?= icon('alert', 20) ?>
                 <div>
@@ -295,7 +279,7 @@ require __DIR__ . '/../includes/header.php';
             </div>
         </div>
 
-        <!-- Loading indicator -->
+        
         <div id="aiLoading" style="display:none">
             <div class="card">
                 <div class="card-body text-center py-5">
@@ -309,10 +293,10 @@ require __DIR__ . '/../includes/header.php';
 
     </div>
 
-    <!-- Sidebar -->
+    
     <div class="col-lg-4">
 
-        <!-- How it works -->
+        
         <div class="card mb-3">
             <div class="card-header">How the AI assistant works</div>
             <div class="card-body">
@@ -347,7 +331,7 @@ require __DIR__ . '/../includes/header.php';
             </div>
         </div>
 
-        <!-- Doctor lateness reminder -->
+        
         <?php if ($pendingCount > 0): ?>
             <div class="card mb-3 ai-reminder-card">
                 <div class="card-header d-flex align-items-center gap-2">
@@ -371,7 +355,7 @@ require __DIR__ . '/../includes/header.php';
             </div>
         <?php endif; ?>
 
-        <!-- Privacy note -->
+        
         <div class="card">
             <div class="card-header d-flex align-items-center gap-2">
                 <span class="ai-icon-badge" style="background:#e8f5f2;color:#075f5c"><?= icon('lock', 16) ?></span>
@@ -385,7 +369,7 @@ require __DIR__ . '/../includes/header.php';
             </div>
         </div>
 
-        <!-- Quick links -->
+        
         <div class="card mt-3">
             <div class="card-header">Quick links</div>
             <div class="card-body d-flex flex-column gap-2">

@@ -1,10 +1,4 @@
 <?php
-/**
- * doctor/appointments.php — the doctor's queue.
- *
- * Accept / reject requests, and close a visit by filing notes and a
- * prescription. Every action is POST + CSRF and re-checks ownership.
- */
 
 declare(strict_types=1);
 
@@ -13,9 +7,6 @@ require_once __DIR__ . '/../config/config.php';
 $user = require_login('doctor');
 $did  = (int) $user['id'];
 
-/* ------------------------------------------------------------------ */
-/*  Actions                                                           */
-/* ------------------------------------------------------------------ */
 if (is_post()) {
     verify_csrf();
 
@@ -77,9 +68,6 @@ if (is_post()) {
     redirect('doctor/appointments.php?status=' . urlencode(post('status', 'pending')));
 }
 
-/* ------------------------------------------------------------------ */
-/*  Listing                                                           */
-/* ------------------------------------------------------------------ */
 $status = query('status', 'pending');
 if (!in_array($status, ['pending', 'upcoming', 'past', 'all'], true)) {
     $status = 'pending';

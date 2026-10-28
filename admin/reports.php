@@ -36,7 +36,6 @@ $newUsers = db()->query(
      FROM users WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)"
 )->fetch();
 
-/* Six month trend. */
 $trendRows = db()->query(
     "SELECT DATE_FORMAT(`date`, '%Y-%m') AS m, COUNT(*) AS c
        FROM appointments

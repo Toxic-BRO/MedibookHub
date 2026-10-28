@@ -42,7 +42,6 @@ if (is_post()) {
     }
 }
 
-
 $docs = db()->prepare(
     "SELECT DISTINCT u.id, u.name, d.specialty
        FROM appointments a

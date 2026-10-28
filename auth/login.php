@@ -1,7 +1,4 @@
 <?php
-/**
- * auth/login.php — one form for every role; redirect by role after success.
- */
 
 declare(strict_types=1);
 
@@ -14,7 +11,6 @@ if (is_logged_in()) {
 $errors = [];
 $email  = '';
 
-/* Simple session-based throttle: 5 failed tries, then a 10 minute cool-off. */
 $throttle = $_SESSION['login_throttle'] ?? ['count' => 0, 'until' => 0];
 $lockedOut = (int) $throttle['until'] > time();
 
@@ -34,7 +30,7 @@ if (is_post()) {
         $stmt->execute([$email]);
         $user = $stmt->fetch();
 
-        // Same message whether the email is unknown or the password is wrong.
+        
         if (!$user || !password_verify($password, $user['password_hash'])) {
             $throttle['count'] = (int) $throttle['count'] + 1;
             if ($throttle['count'] >= 5) {

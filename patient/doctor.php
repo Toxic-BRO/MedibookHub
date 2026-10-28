@@ -41,7 +41,6 @@ if ($rescheduleId > 0 && $isPatient) {
     $reschedule = $rs->fetch() ?: null;
 }
 
-
 $days = doctor_open_days($doctorId, 14);
 $date = query('date');
 
@@ -65,7 +64,6 @@ $hasFree = false;
 foreach ($slots as $s) {
     if ($s['available']) { $hasFree = true; break; }
 }
-
 
 $rev = db()->prepare(
     'SELECT r.rating, r.comment, r.created_at, u.name AS patient_name

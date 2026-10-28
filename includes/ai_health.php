@@ -1,37 +1,12 @@
 <?php
-/**
- * includes/ai_health.php — AI Health Assistant engine.
- *
- * Provides:
- *   - ai_analyze_symptoms($text):  returns specialty, urgency, do's, don'ts, matched doctors
- *   - ai_find_best_doctors($specialty):  returns verified doctors from DB for a given specialty
- *   - ai_check_doctor_lateness():  checks for pending appointments that have been waiting too long
- *                                  and sends reminder notifications to the doctor
- *
- * No external API required — uses a built-in medical knowledge base.
- */
 
 declare(strict_types=1);
 
-
-/* --------------------------------------------------------------------- */
-/*  Symptom-to-specialty knowledge base                                  */
-/* --------------------------------------------------------------------- */
-
-/**
- * Each entry maps a set of symptom keywords to:
- *   - specialty:   which doctor specialty to recommend
- *   - urgency:     'normal' | 'soon' | 'urgent'
- *   - dos:         things the patient SHOULD do
- *   - donts:       things the patient should NOT do
- *   - description: a short explanation of the condition
- *   - self_care:   optional self-care advice before seeing the doctor
- */
 function ai_knowledge_base(): array
 {
     return [
 
-        /* ---- Cardiology ---- */
+        
         [
             'keywords' => ['chest pain', 'chest tightness', 'heart palpitation', 'shortness of breath',
                            'high blood pressure', 'hypertension', 'chest discomfort', 'chest pressure',
@@ -56,7 +31,7 @@ function ai_knowledge_base(): array
             'self_care' => 'If chest pain is severe, radiating to the arm or jaw, or accompanied by sweating and nausea, go to the emergency room immediately rather than booking an online appointment.',
         ],
 
-        /* ---- Dermatology ---- */
+        
         [
             'keywords' => ['skin rash', 'rash', 'acne', 'eczema', 'skin infection', 'itching',
                            'skin allergy', 'hives', 'skin irritation', 'dry skin', 'skin bump',
@@ -81,7 +56,7 @@ function ai_knowledge_base(): array
             'self_care' => 'A cool compress can relieve itching temporarily. Use a mild, fragrance-free moisturizer on dry or irritated skin until your appointment.',
         ],
 
-        /* ---- Pediatrics ---- */
+        
         [
             'keywords' => ['child fever', 'baby sick', 'child cough', 'pediatric', 'kid fever',
                            'infant', 'toddler', 'child vaccination', 'baby not eating',
@@ -107,7 +82,7 @@ function ai_knowledge_base(): array
             'self_care' => 'Keep the child comfortable and hydrated. For fever, lukewarm sponging and age-appropriate paracetamol can help. Seek emergency care if the child is unusually drowsy, has difficulty breathing, or has a seizure.',
         ],
 
-        /* ---- Neurology ---- */
+        
         [
             'keywords' => ['headache', 'migraine', 'dizziness', 'fainting', 'seizure',
                            'numbness', 'tingling', 'memory loss', 'confusion', 'stroke',
@@ -133,7 +108,7 @@ function ai_knowledge_base(): array
             'self_care' => 'For migraines, rest in a dark, quiet room. Stay hydrated. Seek emergency care if you experience sudden severe headache, weakness on one side, or difficulty speaking.',
         ],
 
-        /* ---- Orthopedics ---- */
+        
         [
             'keywords' => ['back pain', 'joint pain', 'knee pain', 'arthritis', 'bone fracture',
                            'sprain', 'muscle pain', 'neck pain', 'shoulder pain', 'hip pain',
@@ -159,7 +134,7 @@ function ai_knowledge_base(): array
             'self_care' => 'Follow the RICE protocol for acute injuries: Rest, Ice, Compression, Elevation. Over-the-counter anti-inflammatory medication can provide temporary relief.',
         ],
 
-        /* ---- ENT (Ear, Nose, Throat) ---- */
+        
         [
             'keywords' => ['ear pain', 'ear infection', 'hearing loss', 'ringing in ear',
                            'tinnitus', 'sore throat', 'strep throat', 'tonsillitis',
@@ -185,7 +160,7 @@ function ai_knowledge_base(): array
             'self_care' => 'Warm salt water gargles and steam inhalation can relieve throat and sinus discomfort. Over-the-counter pain relievers may help with ear pain temporarily.',
         ],
 
-        /* ---- Ophthalmology ---- */
+        
         [
             'keywords' => ['eye pain', 'eye irritation', 'blurred vision', 'red eye',
                            'eye infection', 'conjunctivitis', 'pink eye', 'dry eyes',
@@ -211,7 +186,7 @@ function ai_knowledge_base(): array
             'self_care' => 'For dry eyes, preservative-free artificial tears can provide relief. A clean, warm compress can soothe irritation. Seek emergency care for sudden vision loss or eye injury.',
         ],
 
-        /* ---- Gastroenterology ---- */
+        
         [
             'keywords' => ['stomach pain', 'abdominal pain', 'acidity', 'gastric',
                            'ulcer', 'indigestion', 'bloating', 'constipation',
@@ -238,7 +213,7 @@ function ai_knowledge_base(): array
             'self_care' => 'Drink plenty of fluids. Eat bland foods like rice, toast, and bananas if you have an upset stomach. Avoid alcohol and caffeine. Seek emergency care for severe abdominal pain or blood in vomit.',
         ],
 
-        /* ---- Psychiatry ---- */
+        
         [
             'keywords' => ['depression', 'anxiety', 'panic attack', 'stress',
                            'insomnia', 'sleep problem', 'mental health', 'mood swing',
@@ -265,7 +240,7 @@ function ai_knowledge_base(): array
             'self_care' => 'If you are having thoughts of self-harm, please contact a crisis helpline or go to the nearest emergency room immediately. You are not alone, and help is available.',
         ],
 
-        /* ---- Dentistry ---- */
+        
         [
             'keywords' => ['tooth pain', 'toothache', 'cavity', 'gum bleeding',
                            'gum swelling', 'tooth decay', 'dental', 'wisdom tooth',
@@ -291,7 +266,7 @@ function ai_knowledge_base(): array
             'self_care' => 'Over-the-counter pain relievers can help temporarily. A cold compress on the cheek can reduce swelling. Avoid very hot or cold foods until you see the dentist.',
         ],
 
-        /* ---- General Medicine (fallback) ---- */
+        
         [
             'keywords' => ['fever', 'flu', 'cough', 'cold', 'sore throat', 'fatigue',
                            'tiredness', 'body ache', 'weakness', 'general checkup',
@@ -318,7 +293,7 @@ function ai_knowledge_base(): array
             'self_care' => 'Rest, fluids, and a balanced diet help with most common illnesses. Over-the-counter fever reducers can manage temperature. Seek care if symptoms persist beyond 3-5 days or worsen.',
         ],
 
-        /* ---- Endocrinology ---- */
+        
         [
             'keywords' => ['diabetes', 'high blood sugar', 'low blood sugar', 'thyroid',
                            'hyperthyroid', 'hypothyroid', 'hormone', 'insulin',
@@ -343,7 +318,7 @@ function ai_knowledge_base(): array
             'self_care' => 'Maintain a balanced diet with regular meal times. Stay active. For diabetics, always carry a quick sugar source in case of low blood sugar episodes.',
         ],
 
-        /* ---- Pulmonology ---- */
+        
         [
             'keywords' => ['breathing problem', 'asthma', 'pneumonia', 'chronic cough',
                            'wheezing', 'breathlessness', 'lung', 'phlegm',
@@ -368,7 +343,7 @@ function ai_knowledge_base(): array
             'self_care' => 'If you have asthma, use your rescue inhaler as prescribed. Avoid known triggers. Seek emergency care for severe breathing difficulty or blue-tinged lips.',
         ],
 
-        /* ---- Urology ---- */
+        
         [
             'keywords' => ['urinary tract infection', 'UTI', 'kidney stone',
                            'frequent urination', 'painful urination', 'blood in urine',
@@ -393,7 +368,7 @@ function ai_knowledge_base(): array
             'self_care' => 'Drink plenty of water. Avoid bladder irritants like caffeine and spicy foods. Seek urgent care for severe pain, high fever, or inability to urinate.',
         ],
 
-        /* ---- Gynecology ---- */
+        
         [
             'keywords' => ['pregnancy', 'menstrual', 'period problem', 'irregular period',
                            'pregnant', 'gynecology', 'women health', 'ovarian',
@@ -421,26 +396,6 @@ function ai_knowledge_base(): array
     ];
 }
 
-
-/* --------------------------------------------------------------------- */
-/*  AI symptom analysis                                                   */
-/* --------------------------------------------------------------------- */
-
-/**
- * Analyze patient symptom text and return a structured recommendation.
- *
- * @return array{
- *     matched: bool,
- *     specialty: string,
- *     urgency: string,
- *     description: string,
- *     dos: array<string>,
- *     donts: array<string>,
- *     self_care: string,
- *     doctors: array,
- *     query: string
- * }
- */
 function ai_analyze_symptoms(string $text): array
 {
     $text = trim($text);
@@ -448,12 +403,12 @@ function ai_analyze_symptoms(string $text): array
 
     $kb = ai_knowledge_base();
 
-    // Score each entry by counting keyword matches.
+    
     $bestEntry = null;
     $bestScore = 0;
     $bestSpecialty = 'General Medicine';
 
-    // Default fallback entry
+    
     $fallback = [
         'specialty' => 'General Medicine',
         'urgency' => 'normal',
@@ -485,12 +440,12 @@ function ai_analyze_symptoms(string $text): array
         }
     }
 
-    // If no keyword matched, use the fallback.
+    
     if ($bestEntry === null) {
         $bestEntry = $fallback;
     }
 
-    // Find best-matching doctors from the database.
+    
     $doctors = ai_find_best_doctors($bestSpecialty);
 
     return [
@@ -506,16 +461,9 @@ function ai_analyze_symptoms(string $text): array
     ];
 }
 
-
-/**
- * Find the best-matching verified doctors for a given specialty.
- * Falls back to general medicine if no specialist is found.
- *
- * @return array<int, array>
- */
 function ai_find_best_doctors(string $specialty, int $limit = 4): array
 {
-    // First try to find exact specialty match.
+    
     $sql = "SELECT u.id, u.name, d.specialty, d.fee, d.experience, d.location,
                    d.photo, d.bio,
                    (SELECT ROUND(AVG(r.rating), 1)
@@ -534,14 +482,14 @@ function ai_find_best_doctors(string $specialty, int $limit = 4): array
              WHERE d.is_verified = 1
                AND u.status = 'active'
                AND d.specialty = ?
-             ORDER BY avg_rating DESC NULLS LAST, completed_count DESC, u.name ASC
+             ORDER BY (avg_rating IS NULL), avg_rating DESC, completed_count DESC, u.name ASC
              LIMIT " . max(1, $limit);
 
     $stmt = db()->prepare($sql);
     $stmt->execute([$specialty]);
     $doctors = $stmt->fetchAll();
 
-    // If no exact match found, broaden to all verified doctors.
+    
     if (!$doctors && $specialty !== 'General Medicine') {
         $sql2 = "SELECT u.id, u.name, d.specialty, d.fee, d.experience, d.location,
                         d.photo, d.bio,
@@ -561,7 +509,7 @@ function ai_find_best_doctors(string $specialty, int $limit = 4): array
                   WHERE d.is_verified = 1
                     AND u.status = 'active'
                     AND d.specialty = 'General Medicine'
-                  ORDER BY avg_rating DESC NULLS LAST, completed_count DESC, u.name ASC
+                  ORDER BY (avg_rating IS NULL), avg_rating DESC, completed_count DESC, u.name ASC
                   LIMIT " . max(1, $limit);
 
         $doctors = db()->prepare($sql2);
@@ -569,7 +517,7 @@ function ai_find_best_doctors(string $specialty, int $limit = 4): array
         $doctors = $doctors->fetchAll();
     }
 
-    // If still nothing, return any verified doctor.
+    
     if (!$doctors) {
         $sql3 = "SELECT u.id, u.name, d.specialty, d.fee, d.experience, d.location,
                         d.photo, d.bio,
@@ -588,7 +536,7 @@ function ai_find_best_doctors(string $specialty, int $limit = 4): array
                    JOIN users u ON u.id = d.user_id
                   WHERE d.is_verified = 1
                     AND u.status = 'active'
-                  ORDER BY avg_rating DESC NULLS LAST, completed_count DESC, u.name ASC
+                  ORDER BY (avg_rating IS NULL), avg_rating DESC, completed_count DESC, u.name ASC
                   LIMIT " . max(1, $limit);
 
         $doctors = db()->query($sql3)->fetchAll();
@@ -597,10 +545,6 @@ function ai_find_best_doctors(string $specialty, int $limit = 4): array
     return $doctors;
 }
 
-
-/**
- * Urgency badge HTML for the AI suggestion.
- */
 function ai_urgency_badge(string $urgency): string
 {
     [$cls, $label, $icon] = match ($urgency) {
@@ -614,28 +558,13 @@ function ai_urgency_badge(string $urgency): string
         . icon($icon, 14) . ' ' . e($label) . '</span>';
 }
 
-
-/* --------------------------------------------------------------------- */
-/*  Doctor lateness reminder system                                       */
-/* --------------------------------------------------------------------- */
-
-/**
- * Check for pending appointments that have been waiting beyond a threshold
- * and send reminder notifications to the doctor.
- *
- * Thresholds:
- *   - Pending appointments older than 6 hours → first reminder
- *   - Pending appointments older than 24 hours → urgent reminder
- *
- * @return array{sent: int, details: array<string>}
- */
 function ai_check_doctor_lateness(): array
 {
     $sent = 0;
     $details = [];
 
-    // Find pending appointments that haven't had a reminder sent yet.
-    // We check for a notification with a specific prefix to avoid duplicates.
+    
+    
     $sql = "SELECT a.id, a.patient_id, a.doctor_id, a.`date`, a.`time`,
                    a.created_at, u.name AS patient_name,
                    du.name AS doctor_name,
@@ -654,12 +583,12 @@ function ai_check_doctor_lateness(): array
     foreach ($pending as $appt) {
         $hoursWaiting = (int) $appt['hours_waiting'];
 
-        // Only send reminders for appointments waiting more than 6 hours.
+        
         if ($hoursWaiting < 6) {
             continue;
         }
 
-        // Check if a reminder notification was already sent for this appointment.
+        
         $checkSql = "SELECT COUNT(*) FROM notifications
                       WHERE user_id = ?
                         AND message LIKE ?
@@ -678,7 +607,7 @@ function ai_check_doctor_lateness(): array
             continue;
         }
 
-        // Build the notification message.
+        
         if ($isUrgent) {
             $message = 'URGENT: Patient ' . $appt['patient_name']
                 . ' has been waiting ' . $hoursWaiting . ' hours for your response on '
@@ -697,7 +626,7 @@ function ai_check_doctor_lateness(): array
             false
         );
 
-        // Also notify the patient that the doctor is being reminded.
+        
         notify(
             (int) $appt['patient_id'],
             'We have sent a reminder to ' . $appt['doctor_name']
